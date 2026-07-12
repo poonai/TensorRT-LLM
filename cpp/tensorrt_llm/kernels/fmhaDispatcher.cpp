@@ -98,6 +98,11 @@ bool FmhaDispatcher::isSupported()
             TLLM_LOG_WARNING("TRTLLM-GEN does not support ALiBi.");
             return false;
         }
+        if (mFixedParams.attentionInputLayout == AttentionInputLayout::Q_CONTIGUOUS_KV)
+        {
+            TLLM_LOG_WARNING("TRTLLM-GEN does not support context FMHA with contiguous KV input.");
+            return false;
+        }
         if (mFixedParams.isSPadded)
         {
             TLLM_LOG_WARNING("TRTLLM-GEN does not support padded inputs.");

@@ -1967,7 +1967,6 @@ int AttentionOp::enqueueContext(EnqueueContextParams<T> const& params, cudaStrea
         fmhaParams.slidingWindowSize
             = (mDenseContextFMHA || isCrossAttention()) ? max_kv_seq_len : params.cyclic_attention_window_size;
         fmhaParams.totalQSeqLen = params.num_tokens;
-        // TODO: set it correctly for contiguous kv buffer (cross-attention).
         fmhaParams.totalKvSeqLen = isCrossAttention() ? params.num_encoder_tokens : params.total_kv_len;
         // Device buffer pointers.
         if (mIsMLAEnabled)
@@ -2015,9 +2014,8 @@ int AttentionOp::enqueueContext(EnqueueContextParams<T> const& params, cudaStrea
                                                 : reinterpret_cast<void const*>(attention_input);
             fmhaParams.qPtr = reinterpret_cast<void const*>(workspaceViews.qBuf);
         }
-        // TODO: add contiguous kv buffer (cross-attention).
         fmhaParams.kvPtr = nullptr;
-        if (isCrossAttention() && !useKVCache())
+        if (isCrossAttention())
         {
             fmhaParams.kvPtr = params.cross_kv;
         }
@@ -2825,11 +2823,6 @@ int AttentionOp::initialize() noexcept
         else if (mPositionEmbeddingType == tensorrt_llm::kernels::PositionEmbeddingType::kRELATIVE)
         {
             TLLM_LOG_WARNING("Fall back to unfused MHA because of relative position embedding.");
-        }
-        else if (isCrossAttention() && useKVCache() && !mPagedKVCache)
-        {
-            // TODO: add the support for cross attention + contiguous kv cache.
-            TLLM_LOG_WARNING("Fall back to unfused MHA because of cross attention + contiguous kv cache.");
         }
         else
         {
