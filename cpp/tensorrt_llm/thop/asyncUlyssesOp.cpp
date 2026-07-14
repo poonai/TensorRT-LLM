@@ -193,6 +193,7 @@ public:
         TLLM_CUDA_CHECK(cudaStreamIsCapturing(stream, &captureStatus));
         bool const underCapture = (captureStatus != cudaStreamCaptureStatusNone);
 
+#if CUDA_VERSION >= 13000
         if (!underCapture)
         {
             std::vector<void*> dsts;
@@ -220,6 +221,7 @@ public:
                 dsts.data(), srcs.data(), sizes.data(), static_cast<size_t>(nPeers), attrs, attrIdxs, 1, stream));
         }
         else
+#endif // CUDA_VERSION >= 13000
         {
             for (int p = 0; p < pSize; ++p)
             {

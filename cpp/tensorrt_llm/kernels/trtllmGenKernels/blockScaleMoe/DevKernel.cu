@@ -909,7 +909,11 @@ __global__ void finalizeDeepSeekKernel(KernelParams params)
             float constexpr E4m3MaxVal{448.f};
 
             // Compute the absolute max
+#if CUDA_VERSION >= 12090
             float aMax = BlockReduce(temp_storage).Reduce(fabsf(acc), cuda::maximum<>());
+#else
+            float aMax = BlockReduce(temp_storage).Reduce(fabsf(acc), cub::Max());
+#endif
 
             if (threadIdx.x == 0)
             {
